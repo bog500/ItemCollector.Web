@@ -1,0 +1,160 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+		<script src="http://cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+		<script>
+			var jsonUrl = ' ======= ENTER URL TO itemcollector.json HERE !! ======= ';
+			var itemsTable;
+			var creaturesTable;
+			var existingData = [];
+			
+			function getStatus(b) {
+				if(b || b == 'true') {
+					return '<span class="text-success"><i class="fa fa-check-circle"></i></span>';
+				}
+				return '<span class="text-danger"><i class="fa fa-times-circle"></i></span>';
+			}
+			
+			$.fn.dataTable.ext.search.push(
+				function( settings, data, dataIndex ) {
+					var value;
+					if(settings.sTableId == "items") {
+						value = $("#itemsDisplay option:selected").val();
+					} else {
+						value = $("#creaturesDisplay option:selected").val();
+					}
+					var collected = data[3] || "false";
+			 
+					if(value == "all") {
+						return true;
+					}else {
+						return collected == value;
+					}
+				}
+			);
+			
+			function updateData() {
+					var jqxhr = $.ajax({
+					url: jsonUrl,
+					type: "GET",
+					dataType: 'json'
+					})
+					.done(function(data) {
+						$(data.items).each(function(index, item) {
+							var collected = item.collected;
+							var status = getStatus(collected);
+							var icon = item.id.replace(":","-");
+							if(icon.indexOf("-") == -1) {
+								icon += "-0";
+							}
+							if(icon.indexOf("373-") >= 0 && icon != "373-0") {
+								icon = "373-all";
+							}
+							icon = 'items/' + icon;
+							
+							var itemId = 'item_' + item.id;
+							var rowId = itemId.replace(":","-");
+							$('#items > tbody:last-child').append('<tr id="' + rowId + '"><td>' + item.id + '</td><td><img src="icons/' + icon + '.png"/></td><td>' + item.name + '</td><td class="collectedstatus">' + status + '<span style="display: none">'+item.collected+'</span></td></tr>');
+							
+						});
+
+						
+						$(data.creatures).each(function(index, item) {
+							var collected = item.collected;
+							var status = getStatus(collected);
+							var icon = item.id.replace(":","-");
+							icon = 'creatures/' + icon;
+							
+							var itemId = 'creature_' + item.id;
+							var rowId = itemId.replace(":","-");
+							$('#creatures > tbody:last-child').append('<tr id="' + rowId + '"><td>' + item.id + '</td><td><img src="icons/' + icon + '.png"/></td><td>' + item.name + '</td><td class="collectedstatus">' + status + '<span style="display: none">'+item.collected+'</span></td></tr>');
+	
+						});
+						
+						itemsTable = $('#items').DataTable();
+						var data = itemsTable
+						.column(1)
+						.data()
+						.sort();
+						
+						creaturesTable = $('#creatures').DataTable();
+						var data = creaturesTable
+						.column(1)
+						.data()
+						.sort();
+					})
+					.success(function(data) {
+	
+					})
+					.fail(function(data) {
+
+					})
+					.always(function(data) {
+					});
+			}
+	
+			$(document).ready(function() {
+				$('#itemsDisplay').change( function() {
+					itemsTable.draw();
+				});
+				$('#creaturesDisplay').change( function() {
+					creaturesTable.draw();
+				});
+				
+				updateData();
+			});
+		</script>
+	</head>
+	<body>
+	<div class="container body-content">
+		<h1>ItemCollector</h1>
+		<h2>Items</h2>
+		<div class="dataTables_length" id="items_length">
+		<label>Show 
+		<select id="itemsDisplay" name="itemsDisplay" aria-controls="itemsDisplay" class="">
+			<option value="all">all</option>
+			<option value="false" selected="selected">missing</option>
+			<option value="true">collected</option>
+		</select> items</label>
+		</div>
+		<table id="items">
+		<thead>
+			<tr>
+				<th class="col-md-2">ID</th>
+				<th class="col-md-1"></th>
+				<th class="col-md-8">Item</th>
+				<th class="col-md-1">Collected</th>
+			</tr>
+		<thead>
+		<tbody>
+		</tbody>
+		</table>
+		
+		<h2>Creatures</h2>
+				<div class="dataTables_length" id="items_length">
+		<label>Show 
+		<select id="creaturesDisplay" name="creaturesDisplay" aria-controls="creaturesDisplay" class="">
+			<option value="all">all</option>
+			<option value="false" selected="selected">missing</option>
+			<option value="true">collected</option>
+		</select> creatures</label>
+		</div>
+		<table id="creatures">
+		<thead>
+			<tr>
+				<th class="col-md-2">ID</th>
+				<th class="col-md-1"></th>
+				<th class="col-md-8">Creature</th>
+				<th class="col-md-1">Captured</th>
+			</tr>
+		<thead>
+		<tbody>
+		</tbody>
+		</table>
+		</div>
+	</body>
+</html>
